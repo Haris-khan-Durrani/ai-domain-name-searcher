@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-950">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>AI Domain Wizard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Subtle sparkle (AI touch) */
+    .sparkle {
+      position: absolute; inset: -40% -40% -40% -40%;
+      background:
+        radial-gradient(600px 300px at 0% 0%, rgba(56,189,248,.08), transparent 60%),
+        radial-gradient(600px 300px at 100% 0%, rgba(168,85,247,.08), transparent 60%),
+        radial-gradient(600px 300px at 100% 100%, rgba(129,140,248,.08), transparent 60%),
+        radial-gradient(600px 300px at 0% 100%, rgba(20,184,166,.08), transparent 60%);
+      filter: blur(0.5px);
+      pointer-events: none;
+    }
+    /* Floating orbs */
+    .orb {
+      position:absolute; border-radius:9999px; opacity:.25; filter: blur(20px);
+      animation: float 12s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0) translateX(0) scale(1);}
+      50% { transform: translateY(-12px) translateX(8px) scale(1.05);}
+    }
+    /* Typewriter caret for placeholder hint */
+    .caret::after {
+      content: "▍";
+      margin-left: 2px;
+      animation: blink 1s steps(1) infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* Skeleton shimmer */
+    .shimmer {
+      position: relative; overflow: hidden;
+    }
+    .shimmer::after {
+      content: "";
+      position: absolute; inset: 0;
+      transform: translateX(-100%);
+      background-image: linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
+      animation: shimmer 1.2s infinite;
+    }
+    @keyframes shimmer { 100% { transform: translateX(100%);} }
+
+    /* Nice focus ring */
+    .focus-ring:focus { outline: none; box-shadow: 0 0 0 6px rgba(99,102,241,.25); }
+  </style>
+</head>
+<body class="h-full text-slate-100 antialiased relative">
+  <!-- Background effects -->
+  <div class="sparkle"></div>
+  <div class="orb w-60 h-60 bg-cyan-500/40 -top-10 -left-10"></div>
+  <div class="orb w-64 h-64 bg-fuchsia-500/40 top-1/3 -right-8" style="animation-delay:1.5s"></div>
+  <div class="orb w-48 h-48 bg-indigo-500/40 bottom-10 left-1/3" style="animation-delay:0.8s"></div>
+
+  <main class="relative">
+    <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-24">
+      <header class="text-center">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/70 ring-1 ring-slate-800/80 mb-4">
+          <span class="text-lg">🤖</span>
+          <span class="text-xs tracking-widest uppercase text-slate-300">AI Domain Wizard</span>
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-semibold leading-tight">
+          Get brandable domain ideas—just describe your business.
+        </h1>
+        <p class="text-slate-300 mt-2">Type what you do, hit Generate, and we’ll spark creative, available-ready domain suggestions.</p>
+      </header>
+
+      <!-- Input Card -->
+      <div class="mt-8 bg-slate-900/60 ring-1 ring-slate-800 rounded-2xl p-4 sm:p-6 backdrop-blur">
+        <div class="flex flex-col md:flex-row gap-3 items-stretch">
+          <div class="flex-1">
+            <label for="prompt" class="sr-only">Describe your business</label>
+            <div class="relative">
+              <input id="prompt" type="text" class="w-full focus-ring rounded-xl bg-slate-950/60 ring-1 ring-slate-800 px-4 py-3 pr-24 placeholder-slate-500"
+                placeholder="e.g. We build custom software for startups and SMEs"
+                aria-label="Describe your business" />
+              <div class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 caret hidden sm:block">
+                hint: “AI-powered …”
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-2">
+            <button id="generateBtn" class="px-4 py-3 rounded-xl bg-indigo-500 hover:bg-indigo-400 active:bg-indigo-600 transition font-medium">
+              Generate
+            </button>
+            <button id="regenBtn" class="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 ring-1 ring-slate-700 transition font-medium" disabled>
+              Regenerate
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick examples -->
+        <div class="flex flex-wrap gap-2 mt-3 text-sm">
+          <span class="text-slate-400">Try:</span>
+          <button class="ex-btn px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 ring-1 ring-slate-700">I’m opening a boutique digital marketing agency in Dubai</button>
+          <button class="ex-btn px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 ring-1 ring-slate-700">Launching a cloud bookkeeping service for restaurants</button>
+          <button class="ex-btn px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 ring-1 ring-slate-700">Starting a software house for AI automation & dashboards</button>
+        </div>
+      </div>
+
+      <!-- Status / Loader -->
+      <div id="statusWrap" class="mt-6 hidden">
+        <div class="flex items-center gap-3 text-slate-300">
+          <div class="relative w-5 h-5">
+            <div class="absolute inset-0 rounded-full border-2 border-slate-600 border-t-transparent animate-spin"></div>
+          </div>
+          <span id="statusText">Thinking up names…</span>
+          <span class="ml-1 animate-pulse">●●●</span>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="results" class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+      <!-- Empty state -->
+      <div id="emptyState" class="mt-10 text-center text-slate-400">
+        <p>Results will appear here.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-6 z-50 hidden">
+    <div class="px-4 py-2 rounded-full bg-slate-900 ring-1 ring-slate-700 text-sm">Copied to clipboard</div>
+  </div>
+
+  <script>
+    // ================== CONFIG ==================
+    // If calling directly works in your environment:
+     const API_ENDPOINT = 'https://my.20i.com/a/ai-domain-search';
+    // Recommended: point this to your server-side proxy endpoint:
+  //  const API_ENDPOINT = '/api/ai-domain-search'; // e.g., your proxy: forwards to https://my.20i.com/a/ai-domain-search
+
+    // ============== DOM REFS ==============
+    const promptEl = document.getElementById('prompt');
+    const generateBtn = document.getElementById('generateBtn');
+    const regenBtn = document.getElementById('regenBtn');
+    const statusWrap = document.getElementById('statusWrap');
+    const statusText = document.getElementById('statusText');
+    const resultsEl = document.getElementById('results');
+    const emptyState = document.getElementById('emptyState');
+    const toast = document.getElementById('toast');
+
+    let lastPrompt = '';
+    let lastSeed = 0;
+
+    // ============== HELPERS ==============
+    function showToast(msg = 'Copied to clipboard') {
+      toast.querySelector('div').textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 1400);
+    }
+
+    function setLoading(isLoading, label = 'Thinking up names…') {
+      statusText.textContent = label;
+      statusWrap.classList.toggle('hidden', !isLoading);
+      generateBtn.disabled = isLoading;
+      regenBtn.disabled = isLoading || !lastPrompt;
+    }
+
+    function skeletonCards(count = 6) {
+      resultsEl.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const card = document.createElement('div');
+        card.className = "rounded-xl ring-1 ring-slate-800 bg-slate-900/60 p-4 shimmer";
+        card.innerHTML = `
+          <div class="h-5 w-40 bg-slate-800/70 rounded mb-3"></div>
+          <div class="h-4 w-24 bg-slate-800/70 rounded"></div>
+        `;
+        resultsEl.appendChild(card);
+      }
+    }
+
+    function renderResults(domains = []) {
+      resultsEl.innerHTML = '';
+      if (!domains.length) {
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      emptyState.classList.add('hidden');
+
+      domains.forEach(d => {
+        const name = String(d).trim();
+        const card = document.createElement('div');
+        card.className = "rounded-xl ring-1 ring-slate-800 bg-slate-900/60 p-4 hover:ring-indigo-600/50 transition";
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h3 class="text-lg font-semibold">${name}</h3>
+              <div class="mt-1 text-xs text-slate-400">AI suggestion</div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button class="copy-btn px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 ring-1 ring-slate-700 text-sm" data-domain="${name}">Copy</button>
+              <a class="px-3 py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-sm font-medium"
+                 href="https://www.namecheap.com/domains/registration/results/?domain=${encodeURIComponent(name)}"
+                 target="_blank" rel="noopener">
+                Check
+              </a>
+            </div>
+          </div>
+        `;
+        resultsEl.appendChild(card);
+      });
+
+      // Hook copy buttons
+      resultsEl.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(btn.dataset.domain);
+            showToast();
+          } catch {
+            showToast('Copy failed');
+          }
+        });
+      });
+    }
+
+    async function fetchDomains(prompt, { seed } = {}) {
+      // Build URL
+      const url = new URL(API_ENDPOINT, window.location.origin);
+      url.searchParams.set('prompt', prompt);
+      if (seed != null) url.searchParams.set('seed', seed); // your proxy can use this to vary results
+
+      // If you are calling 20i directly, use:
+      // const url = new URL('https://my.20i.com/a/ai-domain-search');
+      // url.searchParams.set('prompt', prompt);
+
+      const res = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+          // Do NOT send PHPSESSID from the browser. Keep auth in your server-side proxy if needed.
+        },
+        credentials: 'omit'
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Failed (${res.status}) ${text.slice(0,200)}`);
+      }
+      const data = await res.json();
+      // Expect shape: { results: ["domain1", ...] }
+      return Array.isArray(data?.results) ? data.results : [];
+    }
+
+    // ============== EVENTS ==============
+    async function runGenerate(regenerate = false) {
+      const prompt = (regenerate ? lastPrompt : promptEl.value).trim();
+      if (!prompt) {
+        promptEl.focus();
+        return;
+      }
+
+      lastPrompt = prompt;
+      lastSeed = Math.floor(Math.random() * 1e9);
+
+      setLoading(true, regenerate ? 'Finding fresh alternatives…' : 'Thinking up names…');
+      skeletonCards(6);
+      try {
+        const domains = await fetchDomains(prompt, { seed: lastSeed });
+        renderResults(domains);
+      } catch (err) {
+        resultsEl.innerHTML = `
+          <div class="rounded-xl ring-1 ring-red-500/40 bg-red-500/10 p-4">
+            <div class="font-semibold text-red-300">Request failed</div>
+            <div class="text-sm text-red-200 mt-1">${(err?.message || err).toString().replace(/</g,'&lt;')}</div>
+            <div class="text-xs text-slate-400 mt-2">
+              Tip: call the 20i endpoint through a small server-side proxy to avoid CORS/cookie issues.
+            </div>
+          </div>
+        `;
+      } finally {
+        setLoading(false);
+        regenBtn.disabled = !lastPrompt;
+      }
+    }
+
+    generateBtn.addEventListener('click', () => runGenerate(false));
+    regenBtn.addEventListener('click', () => runGenerate(true));
+    promptEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') runGenerate(false);
+    });
+
+    // Example chips
+    document.querySelectorAll('.ex-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        promptEl.value = btn.textContent.trim();
+        runGenerate(false);
+      });
+    });
+
+    // Keyboard shortcut: Ctrl/Cmd + R to regenerate
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r') {
+        e.preventDefault();
+        if (!regenBtn.disabled) runGenerate(true);
+      }
+    });
+  </script>
+</body>
+</html>
